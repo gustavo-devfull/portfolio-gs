@@ -55,12 +55,16 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
 
         try {
+          console.log('File received:', fileName, 'size:', fileData.length)
+
           // Generate unique filename
           const timestamp = Date.now()
           const ext = fileName.split('.').pop() || 'jpg'
           const uniqueFileName = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`
+          console.log('Generated filename:', uniqueFileName)
 
           // Connect to FTP
+          console.log('Connecting to FTP:', { host: ftpHost, user: ftpUser })
           const client = new Client()
           await client.access({
             host: ftpHost,
@@ -68,13 +72,17 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             password: ftpPass,
             secure: true,
           })
+          console.log('FTP connection successful')
 
           // Create stream from file data
           const stream = Readable.from([fileData])
 
           // Upload to FTP
+          console.log('Ensuring directory:', basePath)
           await client.ensureDir(basePath)
+          console.log('Uploading file to:', `${basePath}/${uniqueFileName}`)
           await client.uploadFrom(stream, `${basePath}/${uniqueFileName}`)
+          console.log('Upload completed, closing connection')
           await client.close()
 
           const url = `${baseUrl}/${uniqueFileName}`

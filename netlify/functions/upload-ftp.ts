@@ -1,6 +1,76 @@
-import { Handler } from '@netlify/functions'
+import type { Handler } from '@netlify/functions'
 import { Client } from 'basic-ftp'
 import { Readable } from 'stream'
+import { createRequire } from 'module'
+
+const require = createRequire(import.meta.url)
+const Busboy = require('busboy') as (config: {
+  headers: Record<string, string>
+}) => NodeJS.WritableStream & {
+  on(event: 'file', listener: (
+    name: string,
+    file: NodeJS.ReadableStream,
+    info: { filename: string; encoding: string; mimeType: string }
+  ) => void): unknown
+  on(event: 'error', listener: (error: Error) => void): unknown
+  on(event: 'finish', listener: () => void): unknown
+  end(buffer: Buffer): void
+}
+
+interface ParsedUpload {
+  buffer: Buffer
+  fileName: string
+}
+
+const parseMultipartUpload = (
+  body: string,
+  headers: Record<string, string | undefined>,
+  isBase64Encoded?: boolean
+): Promise<ParsedUpload> => {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    let fileName = `file-${Date.now()}`
+    let hasFile = false
+
+    const contentType = headers['content-type'] || headers['Content-Type']
+    if (!contentType) {
+      reject(new Error('Missing content type'))
+      return
+    }
+
+    const busboy = Busboy({
+      headers: {
+        'content-type': contentType,
+      },
+    })
+
+    busboy.on('file', (_name, file, info) => {
+      hasFile = true
+      fileName = info.filename || fileName
+
+      file.on('data', (chunk) => {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+      })
+
+      file.on('error', reject)
+    })
+
+    busboy.on('error', reject)
+    busboy.on('finish', () => {
+      if (!hasFile || chunks.length === 0) {
+        reject(new Error('No file data found'))
+        return
+      }
+
+      resolve({
+        buffer: Buffer.concat(chunks),
+        fileName,
+      })
+    })
+
+    busboy.end(Buffer.from(body, isBase64Encoded ? 'base64' : 'binary'))
+  })
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -10,11 +80,12 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const ftpHost = process.env.VITE_FTP_HOST
-  const ftpUser = process.env.VITE_FTP_USER
-  const ftpPass = process.env.VITE_FTP_PASS
+  const ftpHost = process.env.FTP_HOST || process.env.VITE_FTP_HOST
+  const ftpUser = process.env.FTP_USER || process.env.VITE_FTP_USER
+  const ftpPass = process.env.FTP_PASS || process.env.VITE_FTP_PASS
   const basePath = process.env.VITE_FTP_BASE_PATH || '/public_html/portfolio/images'
   const baseUrl = process.env.VITE_FTP_BASE_URL || 'https://example.com/portfolio/images'
+  const secure = (process.env.FTP_SECURE || process.env.VITE_FTP_SECURE) === 'true'
 
   if (!ftpHost || !ftpUser || !ftpPass) {
     return {
@@ -31,37 +102,11 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // Parse multipart form data
-    const boundary = event.headers['content-type']?.split('boundary=')[1]
-    if (!boundary) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid multipart data' }),
-      }
-    }
-
-    // Extract file from multipart data
-    const parts = event.body.split(`--${boundary}`)
-    let fileData: string | null = null
-    let fileName: string | null = null
-
-    for (const part of parts) {
-      if (part.includes('filename=')) {
-        const fileMatch = part.match(/filename="([^"]+)"/)
-        fileName = fileMatch?.[1] || `file-${Date.now()}`
-
-        // Extract binary data (simplified - in production use a proper multipart parser)
-        const contentMatch = part.match(/\r\n\r\n([\s\S]+)\r\n--/)
-        fileData = contentMatch?.[1] || null
-      }
-    }
-
-    if (!fileName || !fileData) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'No file data found' }),
-      }
-    }
+    const { buffer, fileName } = await parseMultipartUpload(
+      event.body,
+      event.headers,
+      event.isBase64Encoded
+    )
 
     // Generate unique filename
     const timestamp = Date.now()
@@ -74,15 +119,15 @@ export const handler: Handler = async (event) => {
       host: ftpHost,
       user: ftpUser,
       password: ftpPass,
-      secure: true,
+      secure,
     })
 
     // Create stream from file data
-    const stream = Readable.from([Buffer.from(fileData, 'binary')])
+    const stream = Readable.from(buffer)
 
     // Upload to FTP
     await client.ensureDir(basePath)
-    await client.uploadFrom(stream, `${basePath}/${uniqueFileName}`)
+    await client.uploadFrom(stream, uniqueFileName)
     await client.close()
 
     const url = `${baseUrl}/${uniqueFileName}`

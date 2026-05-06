@@ -106,7 +106,12 @@ export const uploadImageToFtp = async (
             reject(new Error('Invalid response from server'))
           }
         } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`))
+          try {
+            const response: UploadResponse = JSON.parse(xhr.responseText)
+            reject(new Error(response.error || `Upload failed with status ${xhr.status}`))
+          } catch {
+            reject(new Error(`Upload failed with status ${xhr.status}`))
+          }
         }
       })
 
@@ -118,8 +123,8 @@ export const uploadImageToFtp = async (
         reject(new Error('Upload cancelled'))
       })
 
-      // Use Vercel or Netlify functions endpoint
-      const endpoint = import.meta.env.VITE_UPLOAD_ENDPOINT || '/api/upload'
+      const endpoint =
+        import.meta.env.VITE_UPLOAD_ENDPOINT || '/.netlify/functions/upload-ftp'
       xhr.open('POST', endpoint, true)
       xhr.send(formData)
     })

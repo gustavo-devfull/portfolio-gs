@@ -1,13 +1,10 @@
-import { Handler } from '@netlify/functions'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Client } from 'basic-ftp'
 import { Readable } from 'stream'
 
-export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    }
+export default async (req: VercelRequest, res: VercelResponse) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const ftpHost = process.env.VITE_FTP_HOST
@@ -17,50 +14,54 @@ export const handler: Handler = async (event) => {
   const baseUrl = process.env.VITE_FTP_BASE_URL || 'https://example.com/portfolio/images'
 
   if (!ftpHost || !ftpUser || !ftpPass) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'FTP configuration missing' }),
-    }
+    return res.status(500).json({ error: 'FTP configuration missing' })
   }
 
   try {
-    if (!event.body) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'No file provided' }),
-      }
+    if (!req.body) {
+      return res.status(400).json({ error: 'No file provided' })
     }
 
-    // Parse multipart form data
-    const boundary = event.headers['content-type']?.split('boundary=')[1]
-    if (!boundary) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid multipart data' }),
+    // req.body should be a Buffer when handling file uploads
+    let fileData: Buffer
+    let fileName: string
+
+    if (typeof req.body === 'string') {
+      // Multipart form data as string
+      const contentType = req.headers['content-type'] || ''
+      const boundary = contentType.split('boundary=')[1]
+
+      if (!boundary) {
+        return res.status(400).json({ error: 'Invalid multipart data' })
       }
-    }
 
-    // Extract file from multipart data
-    const parts = event.body.split(`--${boundary}`)
-    let fileData: string | null = null
-    let fileName: string | null = null
+      const parts = req.body.split(`--${boundary}`)
+      let found = false
 
-    for (const part of parts) {
-      if (part.includes('filename=')) {
-        const fileMatch = part.match(/filename="([^"]+)"/)
-        fileName = fileMatch?.[1] || `file-${Date.now()}`
+      for (const part of parts) {
+        if (part.includes('filename=')) {
+          const fileMatch = part.match(/filename="([^"]+)"/)
+          fileName = fileMatch?.[1] || `file-${Date.now()}`
 
-        // Extract binary data (simplified - in production use a proper multipart parser)
-        const contentMatch = part.match(/\r\n\r\n([\s\S]+)\r\n--/)
-        fileData = contentMatch?.[1] || null
+          const contentMatch = part.match(/\r\n\r\n([\s\S]+)\r\n--/)
+          const data = contentMatch?.[1]
+          if (data) {
+            fileData = Buffer.from(data, 'binary')
+            found = true
+            break
+          }
+        }
       }
-    }
 
-    if (!fileName || !fileData) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'No file data found' }),
+      if (!found) {
+        return res.status(400).json({ error: 'No file data found' })
       }
+    } else if (Buffer.isBuffer(req.body)) {
+      // Binary buffer
+      fileData = req.body
+      fileName = `file-${Date.now()}.jpg`
+    } else {
+      return res.status(400).json({ error: 'Invalid request body' })
     }
 
     // Generate unique filename
@@ -78,7 +79,7 @@ export const handler: Handler = async (event) => {
     })
 
     // Create stream from file data
-    const stream = Readable.from([Buffer.from(fileData, 'binary')])
+    const stream = Readable.from([fileData])
 
     // Upload to FTP
     await client.ensureDir(basePath)
@@ -86,17 +87,10 @@ export const handler: Handler = async (event) => {
     await client.close()
 
     const url = `${baseUrl}/${uniqueFileName}`
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ url }),
-    }
+    return res.status(200).json({ url })
   } catch (error) {
     console.error('FTP upload error:', error)
     const message = error instanceof Error ? error.message : 'Upload failed'
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: message }),
-    }
+    return res.status(500).json({ error: message })
   }
 }

@@ -8,16 +8,25 @@ import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
+console.log('🚀 Portfolio App Starting...')
+
 // Log all errors globally
 window.addEventListener('error', (event) => {
-  console.error('Global error:', event.error)
+  console.error('❌ Global error:', event.error)
 })
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection:', event.reason)
+  console.error('❌ Unhandled promise rejection:', event.reason)
 })
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')
+console.log('✅ Root element found:', rootElement)
+
+if (!rootElement) {
+  console.error('❌ Root element not found!')
+}
+
+createRoot(rootElement!).render(
   <StrictMode>
     <ErrorBoundary>
       <PrimeReactProvider>

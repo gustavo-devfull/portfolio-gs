@@ -5,6 +5,7 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { useLanguageStore } from '@/store/languageStore'
 
 export const Header: React.FC = () => {
+  console.log('🔘 Header rendering')
   const { t } = useTranslation()
   const { lang, setLang } = useLanguageStore()
   const headerRef = useRef<HTMLDivElement>(null)

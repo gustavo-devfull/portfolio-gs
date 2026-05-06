@@ -10,8 +10,10 @@ import { FeaturedProjectCard } from '@/components/projects/FeaturedProjectCard'
 gsap.registerPlugin(ScrollTrigger)
 
 export const Home: React.FC = () => {
+  console.log('📄 Home page rendering')
   const { t } = useTranslation()
   const { fetchProjects, projects, loading } = useProjects()
+  console.log('✅ Hooks initialized, projects:', projects.length, 'loading:', loading)
 
   // Featured section
   const featuredRef = useRef<HTMLDivElement>(null)

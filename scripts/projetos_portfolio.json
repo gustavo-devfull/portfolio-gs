@@ -1,0 +1,293 @@
+{
+  "portfolioInfo": {
+    "name": "Gustavo Santos",
+    "title": "Front-End Developer",
+    "description": "Desenvolvedor Front-End apaixonado por design e tecnologia",
+    "website": "https://site.gustavosantos.xyz/",
+    "github": "gustavo-devfull",
+    "location": "Araraquara, SP, Brazil"
+  },
+  "featuredProjects": [
+    {
+      "id": 1,
+      "title": "Base de Produtos (Base Ravi 2025)",
+      "status": "Destaque",
+      "tag": "Front-End • Sistema Interno",
+      "shortDescription": "Sistema interno de catálogo de produtos voltado para empresa que importa produtos, com foco em facilitar a gestão e consulta da base de itens.",
+      "fullDescription": "É uma aplicação web completa para gerenciar um catálogo/base de produtos, desenvolvida em React + TypeScript, com banco de dados no Firebase Firestore e deploy na Vercel.",
+      "image": "ravi.jpg",
+      "features": [
+        {
+          "name": "Cadastro e gestão de produtos (CRUD completo)",
+          "description": "Permite criar, visualizar, editar e excluir produtos com mais de 30 campos cada – incluindo referência, marca, descrição, preços em RMB e USD, dimensões, peso, códigos EAN/DUN/NCM/CEST, nomes para invoice, entre outros."
+        },
+        {
+          "name": "Dashboard visual com cards",
+          "description": "Exibe os produtos em um grid responsivo (3 por linha no desktop, 2 no tablet, 1 no mobile), com imagem de cada produto carregada diretamente do DigitalOcean Spaces com base na referência do produto."
+        },
+        {
+          "name": "Importação via planilha Excel",
+          "description": "O usuário pode baixar um template .xlsx, preencher os dados e fazer upload. O sistema valida os dados automaticamente, exibe um preview, permite edição em lote antes de salvar tudo no banco."
+        },
+        {
+          "name": "Busca e filtros avançados",
+          "description": "Filtragem em tempo real sobre os produtos cadastrados."
+        },
+        {
+          "name": "Visualização detalhada",
+          "description": "Modal com todos os campos do produto + imagem ampliada com zoom."
+        }
+      ],
+      "technologies": [
+        "React 18",
+        "TypeScript",
+        "Vite",
+        "Tailwind CSS",
+        "Firebase Firestore",
+        "DigitalOcean Spaces",
+        "XLSX",
+        "Vercel"
+      ],
+      "link": null,
+      "deployed": true
+    },
+    {
+      "id": 2,
+      "title": "Space Invaders",
+      "status": "Destaque",
+      "tag": "Game Dev • JS",
+      "shortDescription": "Game: Space Invaders",
+      "fullDescription": "Desenvolvimento da mecânica clássica de Space Invaders utilizando HTML Canvas e JavaScript vanilla para lógica e movimentação.",
+      "image": "space-invaders.jpg",
+      "features": [
+        {
+          "name": "Mecânica clássica",
+          "description": "Implementação fiel à mecânica original do jogo"
+        },
+        {
+          "name": "Canvas 2D",
+          "description": "Renderização via HTML Canvas com JavaScript vanilla"
+        }
+      ],
+      "technologies": [
+        "HTML5 Canvas",
+        "JavaScript Vanilla"
+      ],
+      "link": "https://gustavosantos.xyz/spaceinvaders/",
+      "deployed": true
+    }
+  ],
+  "otherProjects": [
+    {
+      "id": 3,
+      "title": "Portfólio GPRETO",
+      "tag": "Front-End • React",
+      "shortDescription": "Site de portfólio desenvolvido com foco em experiência visual, combinando animações com Framer Motion e renderização 3D via WebGL (OGL). Conta com formulário de contato funcional integrado ao EmailJS e design system construído sobre Tailwind CSS.",
+      "fullDescription": "Site de portfólio desenvolvido com foco em experiência visual, combinando animações com Framer Motion e renderização 3D via WebGL (OGL). Conta com componentes acessíveis via Radix UI, formulário de contato funcional integrado ao EmailJS e design system construído sobre Tailwind CSS.",
+      "image": "gpreto.jpg",
+      "technologies": [
+        "React",
+        "Framer Motion",
+        "OGL (WebGL)",
+        "Radix UI",
+        "EmailJS",
+        "Tailwind CSS",
+        "Vite"
+      ],
+      "link": "https://www.gustavosantos.com.br/",
+      "deploy": "Vercel – portfolio-gustavosantos.vercel.app",
+      "deployed": true
+    },
+    {
+      "id": 4,
+      "title": "Meninas Atividades",
+      "tag": "Front-End • React · PWA",
+      "shortDescription": "Aplicação web progressiva (PWA) para gerenciamento de atividades, com dados sincronizados em tempo real via Firebase Firestore. Por ser uma PWA, pode ser instalada como app no dispositivo sem necessidade de loja.",
+      "fullDescription": "Aplicação web progressiva (PWA) para gerenciamento de atividades, com dados sincronizados em tempo real via Firebase Firestore. Conta com navegação por rotas, manipulação de datas e interface construída com Material UI. Por ser uma PWA, pode ser instalada como app no dispositivo sem necessidade de loja.",
+      "image": "ingles.jpg",
+      "technologies": [
+        "React",
+        "Firebase",
+        "Material UI",
+        "React Router",
+        "date-fns",
+        "Tailwind CSS",
+        "Vite"
+      ],
+      "link": null,
+      "deploy": "Vercel",
+      "deployed": true
+    },
+    {
+      "id": 5,
+      "title": "Quiz & Reveal",
+      "tag": "Front-End • React",
+      "shortDescription": "Jogo web interativo de quiz com revelação progressiva de conteúdo a cada acerto.",
+      "fullDescription": "Jogo web interativo de quiz com revelação progressiva de conteúdo a cada acerto. Desenvolvido com React, TypeScript, Vite, Tailwind CSS e shadcn/ui, com deploy na Vercel.",
+      "image": "quiz.jpg",
+      "technologies": [
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "shadcn/ui",
+        "Vite"
+      ],
+      "link": "https://quiz-and-reveal-game.vercel.app/",
+      "deploy": "Vercel",
+      "deployed": true
+    },
+    {
+      "id": 6,
+      "title": "Gerador de QRCode",
+      "tag": "Front-End • Vue.js",
+      "shortDescription": "Aplicação web para geração de QR Codes a partir de links ou texto livre, com opções de customização de tamanho, cor do código e cor de fundo. O QR Code é gerado em tempo real e pode ser copiado para a área de transferência ou baixado como PNG.",
+      "fullDescription": "Aplicação web para geração de QR Codes a partir de links ou texto livre, com opções de customização de tamanho, cor do código e cor de fundo. O QR Code é gerado em tempo real e pode ser copiado para a área de transferência ou baixado como PNG.",
+      "image": "gerador-home.jpg",
+      "imageModal": "gerador-modal.jpg",
+      "technologies": [
+        "Vue.js",
+        "QRious",
+        "HTML/CSS vanilla"
+      ],
+      "link": "https://qrcode-gs.vercel.app/",
+      "deploy": "Vercel",
+      "deployed": true
+    },
+    {
+      "id": 7,
+      "title": "IA.br Checker",
+      "tag": "Front-End • Vue.js",
+      "shortDescription": "Ferramenta web para verificação de disponibilidade de domínios .ia.br via protocolo RDAP. O usuário insere palavras terminadas em -ia e a aplicação extrai automaticamente o prefixo no formato correto (ex.: utopia → utop.ia.br), consulta a disponibilidade em tempo real e permite exportar os resultados em CSV.",
+      "fullDescription": "Ferramenta web para verificação de disponibilidade de domínios .ia.br via protocolo RDAP. O usuário insere palavras terminadas em -ia e a aplicação extrai automaticamente o prefixo no formato correto (ex.: utopia → utop.ia.br), consulta a disponibilidade em tempo real e permite exportar os resultados em CSV.",
+      "image": "iabr.jpg",
+      "technologies": [
+        "Vue.js",
+        "RDAP API",
+        "HTML/CSS vanilla"
+      ],
+      "link": "https://registro-omega-nine.vercel.app/",
+      "deploy": "Vercel",
+      "deployed": true
+    },
+    {
+      "id": 8,
+      "title": "NutriG – Plano Alimentar",
+      "tag": "Front-End • React",
+      "shortDescription": "Aplicação web de acompanhamento nutricional com armazenamento em nuvem via Firebase. Permite visualizar e gerenciar um plano alimentar personalizado, com suporte a exportação dos dados em formato Excel.",
+      "fullDescription": "Aplicação web de acompanhamento nutricional com armazenamento em nuvem via Firebase. Permite visualizar e gerenciar um plano alimentar personalizado, com suporte a exportação dos dados em formato Excel. O projeto passou por uma refatoração de vanilla JS para React, evidenciando evolução na arquitetura do código.",
+      "image": "nutri.jpg",
+      "technologies": [
+        "React",
+        "Firebase",
+        "ExcelJS",
+        "Vite",
+        "JavaScript"
+      ],
+      "link": null,
+      "deploy": "Vercel",
+      "deployed": true
+    },
+    {
+      "id": 9,
+      "title": "Gerador de Código de Barras",
+      "tag": "Front-End • Vue.js",
+      "shortDescription": "Aplicação web para geração de códigos de barras a partir de texto ou numeração. O código é gerado em tempo real e pode ser copiado ou baixado.",
+      "fullDescription": "Aplicação web para geração de códigos de barras a partir de texto ou numeração. O código é gerado em tempo real e pode ser copiado ou baixado.",
+      "image": "codbarra-home.jpg",
+      "imageModal": "codbarra-modal.jpg",
+      "technologies": [
+        "Vue.js",
+        "HTML/CSS vanilla"
+      ],
+      "link": "https://codigodebarras-gs.vercel.app/",
+      "deploy": "Vercel",
+      "deployed": true
+    },
+    {
+      "id": 10,
+      "title": "Controle Financeiro – Loja",
+      "tag": "Front-End • React",
+      "shortDescription": "Sistema de controle financeiro voltado para gestão de loja, com registro de entradas e saídas, visão geral do caixa e acompanhamento de movimentações.",
+      "fullDescription": "Sistema de controle financeiro voltado para gestão de loja, com registro de entradas e saídas, visão geral do caixa e acompanhamento de movimentações.",
+      "image": "loja.jpg",
+      "imageModal": "loja-modal.jpg",
+      "hasVideo": true,
+      "videoSrc": "Macbook-Air-controle-loja-app.vercel.app-4y4o6yginorq51.webm",
+      "technologies": [
+        "React",
+        "Vite",
+        "JavaScript"
+      ],
+      "link": "https://controle-loja-app.vercel.app/",
+      "deploy": "Vercel",
+      "deployed": true
+    },
+    {
+      "id": 11,
+      "title": "Status Invest Scraper",
+      "tag": "Full-Stack • Python",
+      "shortDescription": "Ferramenta web para consulta de dados de ações brasileiras em tempo real via Status Invest. Suporta busca individual ou em lote por código de ação (ex.: PETR4, VALE3) e exibe os resultados de forma clara.",
+      "fullDescription": "Ferramenta web para consulta de dados de ações brasileiras em tempo real via Status Invest. Suporta busca individual ou em lote por código de ação (ex.: PETR4, VALE3, ITUB4), com tratamento de erros e interface limpa para análise rápida.",
+      "image": "invest-home.jpg",
+      "imageModal": "invest-modal.jpg",
+      "technologies": [
+        "Python",
+        "Flask",
+        "Requests",
+        "HTML/CSS vanilla"
+      ],
+      "link": "https://invest-brown.vercel.app/",
+      "deploy": "Vercel",
+      "deployed": true
+    }
+  ],
+  "technologiesSummary": {
+    "frameworks": [
+      "React 18",
+      "Vue.js",
+      "Framer Motion"
+    ],
+    "languages": [
+      "JavaScript",
+      "TypeScript",
+      "Python"
+    ],
+    "styling": [
+      "Tailwind CSS",
+      "Material UI",
+      "Radix UI"
+    ],
+    "databases": [
+      "Firebase Firestore",
+      "DigitalOcean Spaces"
+    ],
+    "tools": [
+      "Vite",
+      "React Router",
+      "date-fns",
+      "shadcn/ui",
+      "QRious",
+      "RDAP API",
+      "ExcelJS",
+      "Flask"
+    ],
+    "deployment": [
+      "Vercel"
+    ],
+    "other": [
+      "OGL (WebGL)",
+      "HTML5 Canvas",
+      "EmailJS",
+      "WebGL"
+    ]
+  },
+  "statistics": {
+    "totalProjects": 11,
+    "featuredProjects": 2,
+    "otherProjects": 9,
+    "deployedProjects": 11,
+    "averageDeployPlatform": "Vercel",
+    "primaryFrameworks": ["React", "Vue.js"],
+    "primaryLanguages": ["JavaScript", "TypeScript"]
+  }
+}

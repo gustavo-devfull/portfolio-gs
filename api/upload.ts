@@ -14,13 +14,17 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const baseUrl = process.env.VITE_FTP_BASE_URL || 'https://example.com/portfolio/images'
 
   if (!ftpHost || !ftpUser || !ftpPass) {
+    console.error('FTP config missing:', { ftpHost, ftpUser, ftpPass })
     return res.status(500).json({ error: 'FTP configuration missing' })
   }
 
   try {
     if (!req.body) {
+      console.error('No request body provided')
       return res.status(400).json({ error: 'No file provided' })
     }
+
+    console.log('Request body type:', typeof req.body, 'is Buffer:', Buffer.isBuffer(req.body))
 
     // req.body should be a Buffer when handling file uploads
     let fileData: Buffer
@@ -31,8 +35,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       const contentType = req.headers['content-type'] || ''
       const boundary = contentType.split('boundary=')[1]
 
+      console.log('Content-Type:', contentType, 'Boundary:', boundary)
+
       if (!boundary) {
-        return res.status(400).json({ error: 'Invalid multipart data' })
+        return res.status(400).json({ error: 'Invalid multipart data: no boundary found' })
       }
 
       const parts = req.body.split(`--${boundary}`)
@@ -54,13 +60,44 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       }
 
       if (!found) {
+        console.error('No file data found in multipart')
         return res.status(400).json({ error: 'No file data found' })
       }
     } else if (Buffer.isBuffer(req.body)) {
-      // Binary buffer
-      fileData = req.body
-      fileName = `file-${Date.now()}.jpg`
+      // Binary buffer - parse as multipart
+      const contentType = req.headers['content-type'] || ''
+      const boundary = contentType.split('boundary=')[1]
+
+      if (!boundary) {
+        console.error('Buffer received but no boundary found')
+        return res.status(400).json({ error: 'Invalid multipart data: no boundary found' })
+      }
+
+      const bodyString = req.body.toString('binary')
+      const parts = bodyString.split(`--${boundary}`)
+      let found = false
+
+      for (const part of parts) {
+        if (part.includes('filename=')) {
+          const fileMatch = part.match(/filename="([^"]+)"/)
+          fileName = fileMatch?.[1] || `file-${Date.now()}`
+
+          const contentMatch = part.match(/\r\n\r\n([\s\S]+)\r\n--/)
+          const data = contentMatch?.[1]
+          if (data) {
+            fileData = Buffer.from(data, 'binary')
+            found = true
+            break
+          }
+        }
+      }
+
+      if (!found) {
+        console.error('No file data found in multipart buffer')
+        return res.status(400).json({ error: 'No file data found' })
+      }
     } else {
+      console.error('Invalid request body type:', typeof req.body)
       return res.status(400).json({ error: 'Invalid request body' })
     }
 

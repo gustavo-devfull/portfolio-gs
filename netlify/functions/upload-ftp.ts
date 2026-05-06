@@ -16,6 +16,19 @@ const sanitizeFileName = (fileName: string) => {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, '-')
 }
 
+const resolveFtpBasePath = (basePath: string, baseUrl: string) => {
+  if (basePath !== '/public_html') {
+    return basePath
+  }
+
+  try {
+    const publicPath = new URL(baseUrl).pathname.replace(/\/$/, '')
+    return publicPath ? `${basePath}${publicPath}` : basePath
+  } catch {
+    return basePath
+  }
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
@@ -35,6 +48,7 @@ export const handler: Handler = async (event) => {
     process.env.FTP_BASE_URL ||
     process.env.VITE_FTP_BASE_URL ||
     'https://example.com/portfolio/images'
+  const uploadPath = resolveFtpBasePath(basePath, baseUrl)
   const secure = (process.env.FTP_SECURE || process.env.VITE_FTP_SECURE) === 'true'
 
   if (!ftpHost || !ftpUser || !ftpPass) {
@@ -83,7 +97,7 @@ export const handler: Handler = async (event) => {
     const stream = Readable.from(buffer)
 
     // Upload to FTP
-    await client.ensureDir(basePath)
+    await client.ensureDir(uploadPath)
     await client.uploadFrom(stream, uniqueFileName)
     await client.close()
 

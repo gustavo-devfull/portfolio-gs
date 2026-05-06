@@ -24,6 +24,19 @@ const sanitizeFileName = (fileName: string) => {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, '-')
 }
 
+const resolveFtpBasePath = (basePath: string, baseUrl: string) => {
+  if (basePath !== '/public_html') {
+    return basePath
+  }
+
+  try {
+    const publicPath = new URL(baseUrl).pathname.replace(/\/$/, '')
+    return publicPath ? `${basePath}${publicPath}` : basePath
+  } catch {
+    return basePath
+  }
+}
+
 export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -40,6 +53,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     process.env.FTP_BASE_URL ||
     process.env.VITE_FTP_BASE_URL ||
     'https://example.com/portfolio/images'
+  const uploadPath = resolveFtpBasePath(basePath, baseUrl)
   const secure = (process.env.FTP_SECURE || process.env.VITE_FTP_SECURE) === 'true'
 
   if (!ftpHost || !ftpUser || !ftpPass) {
@@ -70,7 +84,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     const stream = Readable.from(buffer)
 
-    await client.ensureDir(basePath)
+    await client.ensureDir(uploadPath)
     await client.uploadFrom(stream, uniqueFileName)
     await client.close()
 

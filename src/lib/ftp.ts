@@ -118,8 +118,8 @@ export const uploadImageToFtp = async (
         reject(new Error('Upload cancelled'))
       })
 
-      // Use Netlify or Vercel functions endpoint
-      const endpoint = import.meta.env.VITE_UPLOAD_ENDPOINT || '/.netlify/functions/upload-ftp'
+      // Use Vercel or Netlify functions endpoint
+      const endpoint = import.meta.env.VITE_UPLOAD_ENDPOINT || '/api/upload'
       xhr.open('POST', endpoint, true)
       xhr.send(formData)
     })
@@ -131,7 +131,8 @@ export const uploadImageToFtp = async (
 
 export const deleteImageFromFtp = async (url: string): Promise<void> => {
   try {
-    const response = await fetch('/.netlify/functions/delete-ftp', {
+    const endpoint = import.meta.env.VITE_DELETE_ENDPOINT || '/api/delete'
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),

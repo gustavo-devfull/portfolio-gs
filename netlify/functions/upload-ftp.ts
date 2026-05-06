@@ -1,21 +1,7 @@
 import type { Handler } from '@netlify/functions'
 import { Client } from 'basic-ftp'
 import { Readable } from 'stream'
-import { createRequire } from 'module'
-
-const require = createRequire(import.meta.url)
-const Busboy = require('busboy') as (config: {
-  headers: Record<string, string>
-}) => NodeJS.WritableStream & {
-  on(event: 'file', listener: (
-    name: string,
-    file: NodeJS.ReadableStream,
-    info: { filename: string; encoding: string; mimeType: string }
-  ) => void): unknown
-  on(event: 'error', listener: (error: Error) => void): unknown
-  on(event: 'finish', listener: () => void): unknown
-  end(buffer: Buffer): void
-}
+import Busboy from 'busboy'
 
 interface ParsedUpload {
   buffer: Buffer

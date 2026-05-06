@@ -31,7 +31,7 @@ const resolveFtpBasePath = (basePath: string, baseUrl: string) => {
 
   try {
     const publicPath = new URL(baseUrl).pathname.replace(/\/$/, '')
-    return publicPath ? `${basePath}${publicPath}` : basePath
+    return publicPath || basePath
   } catch {
     return basePath
   }

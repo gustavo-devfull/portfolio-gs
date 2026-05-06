@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import type { Project } from '@/types'
 
 export const Dashboard: React.FC = () => {
-  const { t, lang } = useTranslation()
+  const { lang } = useTranslation()
   const { projects, loading, fetchProjects, deleteProject } = useProjects()
   const { logout } = useAuth()
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)

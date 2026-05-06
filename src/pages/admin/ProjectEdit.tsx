@@ -41,9 +41,7 @@ export const ProjectEdit: React.FC = () => {
           marginBottom: '2rem',
           color: 'var(--color-text)',
           fontFamily: 'Syncopate, sans-serif',
-          letterSpacing: '0.1em',
-          margin: 0,
-          marginBottom: '2rem'
+          letterSpacing: '0.1em'
         }}>editar: {projectTitle}</h1>
 
         {loading && (

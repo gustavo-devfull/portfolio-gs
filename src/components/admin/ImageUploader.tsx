@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react'
-import { Upload, X, GripVertical } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { uploadImageToFtp } from '@/lib/ftp'
-import { Button } from '@/components/ui/Button'
 
 interface ImageUploaderProps {
   images: string[]

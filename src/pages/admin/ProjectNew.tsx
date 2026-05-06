@@ -20,9 +20,7 @@ export const ProjectNew: React.FC = () => {
           marginBottom: '2rem',
           color: 'var(--color-text)',
           fontFamily: 'Syncopate, sans-serif',
-          letterSpacing: '0.1em',
-          margin: 0,
-          marginBottom: '2rem'
+          letterSpacing: '0.1em'
         }}>{t('admin.newProject')}</h1>
         <ProjectForm onSuccess={() => navigate('/admin')} />
       </div>

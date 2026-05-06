@@ -9,6 +9,38 @@ interface UploadResponse {
   error?: string
 }
 
+const readFileAsBase64 = (
+  file: File,
+  onProgress?: (progress: UploadProgress) => void
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress({
+          loaded: event.loaded,
+          total: event.total,
+          percentage: Math.round((event.loaded / event.total) * 40),
+        })
+      }
+    }
+
+    reader.onload = () => {
+      const result = reader.result
+      if (typeof result !== 'string') {
+        reject(new Error('Failed to read file'))
+        return
+      }
+
+      resolve(result.split(',')[1] || '')
+    }
+
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+}
+
 // Mock upload for development
 const mockUpload = async (
   file: File,
@@ -67,15 +99,13 @@ export const uploadImageToFtp = async (
   file: File,
   onProgress?: (progress: UploadProgress) => void
 ): Promise<string> => {
-  const formData = new FormData()
-  formData.append('file', file)
-
   try {
     // Use mock in development, real endpoint in production
     if (import.meta.env.DEV) {
       return await mockUpload(file, onProgress)
     }
 
+    const data = await readFileAsBase64(file, onProgress)
     const xhr = new XMLHttpRequest()
 
     // Track upload progress
@@ -86,7 +116,7 @@ export const uploadImageToFtp = async (
           onProgress({
             loaded: e.loaded,
             total: e.total,
-            percentage: Math.round(percentComplete),
+            percentage: 40 + Math.round(percentComplete * 0.6),
           })
         }
       })
@@ -126,7 +156,12 @@ export const uploadImageToFtp = async (
       const endpoint =
         import.meta.env.VITE_UPLOAD_ENDPOINT || '/.netlify/functions/upload-ftp'
       xhr.open('POST', endpoint, true)
-      xhr.send(formData)
+      xhr.setRequestHeader('Content-Type', 'application/json')
+      xhr.send(JSON.stringify({
+        fileName: file.name,
+        contentType: file.type,
+        data,
+      }))
     })
   } catch (error) {
     console.error('FTP upload error:', error)

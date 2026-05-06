@@ -1,61 +1,19 @@
 import type { Handler } from '@netlify/functions'
 import { Client } from 'basic-ftp'
 import { Readable } from 'stream'
-import Busboy from 'busboy'
 
-interface ParsedUpload {
-  buffer: Buffer
+interface UploadPayload {
+  contentType?: string
+  data?: string
   fileName: string
 }
 
-const parseMultipartUpload = (
-  body: string,
-  headers: Record<string, string | undefined>,
-  isBase64Encoded?: boolean
-): Promise<ParsedUpload> => {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = []
-    let fileName = `file-${Date.now()}`
-    let hasFile = false
+const getBodyText = (body: string, isBase64Encoded?: boolean) => {
+  return isBase64Encoded ? Buffer.from(body, 'base64').toString('utf8') : body
+}
 
-    const contentType = headers['content-type'] || headers['Content-Type']
-    if (!contentType) {
-      reject(new Error('Missing content type'))
-      return
-    }
-
-    const busboy = Busboy({
-      headers: {
-        'content-type': contentType,
-      },
-    })
-
-    busboy.on('file', (_name, file, info) => {
-      hasFile = true
-      fileName = info.filename || fileName
-
-      file.on('data', (chunk) => {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
-      })
-
-      file.on('error', reject)
-    })
-
-    busboy.on('error', reject)
-    busboy.on('finish', () => {
-      if (!hasFile || chunks.length === 0) {
-        reject(new Error('No file data found'))
-        return
-      }
-
-      resolve({
-        buffer: Buffer.concat(chunks),
-        fileName,
-      })
-    })
-
-    busboy.end(Buffer.from(body, isBase64Encoded ? 'base64' : 'binary'))
-  })
+const sanitizeFileName = (fileName: string) => {
+  return fileName.replace(/[^a-zA-Z0-9._-]/g, '-')
 }
 
 export const handler: Handler = async (event) => {
@@ -69,8 +27,14 @@ export const handler: Handler = async (event) => {
   const ftpHost = process.env.FTP_HOST || process.env.VITE_FTP_HOST
   const ftpUser = process.env.FTP_USER || process.env.VITE_FTP_USER
   const ftpPass = process.env.FTP_PASS || process.env.VITE_FTP_PASS
-  const basePath = process.env.VITE_FTP_BASE_PATH || '/public_html/portfolio/images'
-  const baseUrl = process.env.VITE_FTP_BASE_URL || 'https://example.com/portfolio/images'
+  const basePath =
+    process.env.FTP_BASE_PATH ||
+    process.env.VITE_FTP_BASE_PATH ||
+    '/public_html/portfolio/images'
+  const baseUrl =
+    process.env.FTP_BASE_URL ||
+    process.env.VITE_FTP_BASE_URL ||
+    'https://example.com/portfolio/images'
   const secure = (process.env.FTP_SECURE || process.env.VITE_FTP_SECURE) === 'true'
 
   if (!ftpHost || !ftpUser || !ftpPass) {
@@ -88,15 +52,22 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    const { buffer, fileName } = await parseMultipartUpload(
-      event.body,
-      event.headers,
-      event.isBase64Encoded
-    )
+    const payload = JSON.parse(getBodyText(event.body, event.isBase64Encoded)) as UploadPayload
+    const data = payload.data?.replace(/^data:[^;]+;base64,/, '')
+
+    if (!payload.fileName || !data) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid upload payload' }),
+      }
+    }
+
+    const buffer = Buffer.from(data, 'base64')
+    const safeFileName = sanitizeFileName(payload.fileName)
 
     // Generate unique filename
     const timestamp = Date.now()
-    const ext = fileName.split('.').pop() || 'jpg'
+    const ext = safeFileName.split('.').pop() || 'jpg'
     const uniqueFileName = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`
 
     // Connect to FTP

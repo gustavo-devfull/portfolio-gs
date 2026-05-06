@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Client } from 'basic-ftp'
 import { Readable } from 'stream'
+import Busboy from 'busboy'
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   if (req.method !== 'POST') {
@@ -14,120 +15,83 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const baseUrl = process.env.VITE_FTP_BASE_URL || 'https://example.com/portfolio/images'
 
   if (!ftpHost || !ftpUser || !ftpPass) {
-    console.error('FTP config missing:', { ftpHost, ftpUser, ftpPass })
+    console.error('FTP config missing')
     return res.status(500).json({ error: 'FTP configuration missing' })
   }
 
   try {
-    if (!req.body) {
-      console.error('No request body provided')
-      return res.status(400).json({ error: 'No file provided' })
-    }
+    return await new Promise((resolve) => {
+      const bb = Busboy({ headers: req.headers as any })
+      let fileData: Buffer | null = null
+      let fileName: string | null = null
 
-    console.log('Request body type:', typeof req.body, 'is Buffer:', Buffer.isBuffer(req.body))
+      bb.on('file', (fieldname: string, file: any, info: any) => {
+        fileName = info.filename
+        const chunks: Buffer[] = []
 
-    // req.body should be a Buffer when handling file uploads
-    let fileData: Buffer
-    let fileName: string
+        file.on('data', (data: Buffer) => {
+          chunks.push(data)
+        })
 
-    if (typeof req.body === 'string') {
-      // Multipart form data as string
-      const contentType = req.headers['content-type'] || ''
-      const boundary = contentType.split('boundary=')[1]
+        file.on('end', () => {
+          fileData = Buffer.concat(chunks)
+        })
 
-      console.log('Content-Type:', contentType, 'Boundary:', boundary)
+        file.on('error', (error: Error) => {
+          console.error('File upload error:', error)
+          resolve(res.status(400).json({ error: 'File upload failed' }))
+        })
+      })
 
-      if (!boundary) {
-        return res.status(400).json({ error: 'Invalid multipart data: no boundary found' })
-      }
+      bb.on('error', (error: Error) => {
+        console.error('Busboy error:', error)
+        resolve(res.status(400).json({ error: 'Multipart parsing failed' }))
+      })
 
-      const parts = req.body.split(`--${boundary}`)
-      let found = false
-
-      for (const part of parts) {
-        if (part.includes('filename=')) {
-          const fileMatch = part.match(/filename="([^"]+)"/)
-          fileName = fileMatch?.[1] || `file-${Date.now()}`
-
-          const contentMatch = part.match(/\r\n\r\n([\s\S]+)\r\n--/)
-          const data = contentMatch?.[1]
-          if (data) {
-            fileData = Buffer.from(data, 'binary')
-            found = true
-            break
-          }
+      bb.on('close', async () => {
+        if (!fileData || !fileName) {
+          console.error('No file data received')
+          return resolve(res.status(400).json({ error: 'No file provided' }))
         }
-      }
 
-      if (!found) {
-        console.error('No file data found in multipart')
-        return res.status(400).json({ error: 'No file data found' })
-      }
-    } else if (Buffer.isBuffer(req.body)) {
-      // Binary buffer - parse as multipart
-      const contentType = req.headers['content-type'] || ''
-      const boundary = contentType.split('boundary=')[1]
+        try {
+          // Generate unique filename
+          const timestamp = Date.now()
+          const ext = fileName.split('.').pop() || 'jpg'
+          const uniqueFileName = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`
 
-      if (!boundary) {
-        console.error('Buffer received but no boundary found')
-        return res.status(400).json({ error: 'Invalid multipart data: no boundary found' })
-      }
+          // Connect to FTP
+          const client = new Client()
+          await client.access({
+            host: ftpHost,
+            user: ftpUser,
+            password: ftpPass,
+            secure: true,
+          })
 
-      const bodyString = req.body.toString('binary')
-      const parts = bodyString.split(`--${boundary}`)
-      let found = false
+          // Create stream from file data
+          const stream = Readable.from([fileData])
 
-      for (const part of parts) {
-        if (part.includes('filename=')) {
-          const fileMatch = part.match(/filename="([^"]+)"/)
-          fileName = fileMatch?.[1] || `file-${Date.now()}`
+          // Upload to FTP
+          await client.ensureDir(basePath)
+          await client.uploadFrom(stream, `${basePath}/${uniqueFileName}`)
+          await client.close()
 
-          const contentMatch = part.match(/\r\n\r\n([\s\S]+)\r\n--/)
-          const data = contentMatch?.[1]
-          if (data) {
-            fileData = Buffer.from(data, 'binary')
-            found = true
-            break
-          }
+          const url = `${baseUrl}/${uniqueFileName}`
+          console.log('Upload successful:', url)
+          resolve(res.status(200).json({ url }))
+        } catch (error) {
+          console.error('FTP upload error:', error)
+          const message = error instanceof Error ? error.message : 'Upload failed'
+          resolve(res.status(500).json({ error: message }))
         }
-      }
+      })
 
-      if (!found) {
-        console.error('No file data found in multipart buffer')
-        return res.status(400).json({ error: 'No file data found' })
-      }
-    } else {
-      console.error('Invalid request body type:', typeof req.body)
-      return res.status(400).json({ error: 'Invalid request body' })
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now()
-    const ext = fileName.split('.').pop() || 'jpg'
-    const uniqueFileName = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`
-
-    // Connect to FTP
-    const client = new Client()
-    await client.access({
-      host: ftpHost,
-      user: ftpUser,
-      password: ftpPass,
-      secure: true,
+      bb.write(req.body as Buffer)
+      bb.end()
     })
-
-    // Create stream from file data
-    const stream = Readable.from([fileData])
-
-    // Upload to FTP
-    await client.ensureDir(basePath)
-    await client.uploadFrom(stream, `${basePath}/${uniqueFileName}`)
-    await client.close()
-
-    const url = `${baseUrl}/${uniqueFileName}`
-    return res.status(200).json({ url })
   } catch (error) {
-    console.error('FTP upload error:', error)
-    const message = error instanceof Error ? error.message : 'Upload failed'
-    return res.status(500).json({ error: message })
+    console.error('Unexpected error:', error)
+    return res.status(500).json({ error: 'Internal server error' })
   }
 }
